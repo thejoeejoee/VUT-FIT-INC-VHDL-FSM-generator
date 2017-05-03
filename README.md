@@ -17,7 +17,7 @@ Code 1: 42
 Code 2:
 File to write [fsm_state.vhd]: 
 SUCCESS: Generated states written fsm_state.vhd.
-WARNING: It's neccessary to define cases for print_success, print_fail and wrong_code and implement proccesses for output logic and sync_logic!
+WARNING: It is neccessary to define cases for print_success, print_fail and wrong_code and implement proccesses for output logic and sync_logic!
 
 $ cat fsm_state.vhd
 
