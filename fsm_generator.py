@@ -3,10 +3,10 @@
 from functools import partial
 from itertools import zip_longest
 from operator import is_not
+from sys import stderr
 from typing import Optional, Iterable
 
-FILE_PATTERN = """
-architecture behavioral of fsm is
+FILE_PATTERN = """architecture behavioral of fsm is
     type t_state is (
         {states_enum},
         FINISH
@@ -60,7 +60,7 @@ class Config(object):
     wrong_code_state = 'wrong_code_state'
     print_success_state = "print_success"
     print_fail_state = 'print_fail'
-    output_file = 'fsm_state.vhd'
+    output_file = 'output.vhd'
 
     @classmethod
     def load(cls):
@@ -73,7 +73,7 @@ class Config(object):
         conf.print_success_state = input("State to print success [print_success]: ").strip() or cls.print_success_state
         conf.print_fail_state = input("State to print success [print_fail]: ").strip() or cls.print_fail_state
         conf.finish_state_name = input("State to finish [finish]: ").strip() or cls.finish_state_name
-        conf.output_file = input("File to write [fsm_state.vhd]: ").strip() or cls.output_file
+        conf.output_file = input("File to write [output.vhd]: ").strip() or cls.output_file
 
         conf.code1 = input("Code 1: ").strip()
         conf.code2 = input("Code 2: ").strip()
@@ -140,7 +140,7 @@ class State(object):
                 current_state_name=self.config.current_state_name,
                 next_state=self.next_state,
                 wrong_code_state=self.config.wrong_code_state,
-                print_fail=self.config.print_fail_state,
+                print_fail=self.config.print_fail_state if not self.is_last else self.config.print_success_state,
                 next_state_name=self.config.next_state_name,
                 next_state_branch='\n'.join(self._NEXT_STATE_BRANCH.format(
                     key=next_state_key,
@@ -172,29 +172,20 @@ class State(object):
         )
 
 
-if __name__ == '__main__':
-    """
-    config = Config.load()
-    while not config:
-        print("Invalid config.", file=stderr)
-        config = Config.load()
-    """
-    config = Config()
-    config.code1 = '42'
-    config.code2 = '48'
-    config.output_file = '-'
-
+def generate(config: Config):
     states = []
     split = False
+    code1_len, code2_len = len(config.code1), len(config.code2)
     for i, (num1, num2) in tuple(enumerate(zip_longest(config.code1, config.code2))):
-        is_next_same = config.code1[i + 1: i + 2] == config.code2[i + 1: i + 2]
-        if num1 == num2 and not split:
-            if is_next_same:
+        # is_next_same = config.code1[i + 1: i + 2] == config.code2[i + 1: i + 2]
+        if not split:
+            if num1 == num2:  # shared state
                 state = State(
-                    next_state_key=config.code1[i + 1: i + 2],
+                    next_state_key=num1,
                     char_index=i,
                     config=config,
-                    code_index=0
+                    code_index=0,
+                    is_last=code1_len - 1 == i
                 )
             else:
                 state = State(
@@ -203,32 +194,48 @@ if __name__ == '__main__':
                     config=config,
                     code_index=0,
                     splitter=(
-                        config.code1[i + 1: i + 2],
-                        config.code2[i + 1: i + 2],
-                    )
+                        num1,
+                        num2,
+                    ),
+                    is_last=code1_len - 1 == i
                 )
+                split = True
             states.append(state)
             continue
 
-        split = True
         if num1:
             states.append(State(
-                next_state_key=config.code1[i + 1: i + 2],
+                next_state_key=num1,
                 char_index=i,
                 config=config,
                 code_index=1,
-                is_last=len(config.code1) - 1 == i
+                is_last=code1_len == i
             ))
         if num2:
             states.append(State(
-                next_state_key=config.code2[i + 1: i + 2],
+                next_state_key=num2,
                 char_index=i,
                 config=config,
                 code_index=2,
-                is_last=len(config.code2) - 1 == i
+                is_last=code2_len == i
             ))
+    if split:
+        states.append(State(
+            next_state_key=None,
+            char_index=code1_len,
+            config=config,
+            code_index=1,
+            is_last=True
+        ))
+        states.append(State(
+            next_state_key=None,
+            char_index=code1_len,
+            config=config,
+            code_index=2,
+            is_last=True
+        ))
 
-    generated = FILE_PATTERN.format(
+    return FILE_PATTERN.format(
         code_states='\n'.join(state.vhdl for state in states),
         states_enum=', \n\t\t'.join(state.current_state for state in states),
         wrong_state=config.wrong_code_state,
@@ -239,8 +246,26 @@ if __name__ == '__main__':
         finish_state_name=config.finish_state_name,
         first_code_state=State.state_name(config, 0, 0)
     )
+
+
+if __name__ == '__main__':
+    config = Config.load()
+    while not config:
+        print("Invalid config.", file=stderr)
+        config = Config.load()
+
+    """
+    config = Config()
+    config.code1 = '427'
+    config.code2 = '48910'
+    config.output_file = '-'
+    """
+
+    generated = generate(config)
+
     if config.output_file == '-':
         print(generated)
     else:
         with open(config.output_file, 'w') as f:
             f.write(generated)
+        print("SUCCESS: Generated states written {}.".format(config.output_file))
