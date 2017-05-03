@@ -47,6 +47,10 @@ begin
         {next_state_name} <= {first_code_state};
    end case;
 end process next_state_logic;
+
+-- TODO sync logic
+-- TODO output logic
+
 end architecture behavioral;
 """
 
@@ -89,6 +93,9 @@ class Config(object):
 
 
 class State(object):
+    """
+    Holds one case of FSM switch with info to get to next state (or success/fail print).
+    """
     _NEXT_STATE_BRANCH = """
         if (KEY({key}) = '1') then
             {next_state_name} <= {next_state};

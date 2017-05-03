@@ -1,6 +1,6 @@
 # VUT FIT INC - FSM state generator
 
-Skript sloužící k automatické vygenerování stavů pro [stavový automat](https://cs.wikipedia.org/wiki/Kone%C4%8Dn%C3%BD_automat) řídící přístupový terminál jako projekt do předmětu INC.
+Skript sloužící k automatické vygenerování stavů pro [stavový automat](https://cs.wikipedia.org/wiki/Kone%C4%8Dn%C3%BD_automat) řídící přístupový terminál jako projekt do předmětu INC. Vygenerovaný kód slouží pouze jako inspirace a je nutné jej doplnit o některé náležitosti týkající se FSM.
 
 ## Stažení
 ```bash
@@ -12,34 +12,35 @@ Při spuštění scriptu jste tázáni k zadání návů signálů, pomocných s
 ```bash
 $ ./fsm_generator.py 
 Next state signal name [next_state]: 
-Current state signal name [current_state]: 
+Present state signal name [present_state]: 
 Code state pattern [test_{}]: 
 Wrong code state name [wrong_code]: 
 State to print success [print_success]: 
 State to print success [print_fail]: 
 State to finish [finish]: 
-File to write [fsm_state.vhd]: 
+File to write [output.vhd]: 
 Code 1: 42
 Code 2: 48
-SUCCESS: Generated states written fsm_state.vhd.
-$ cat fsm_state.vhd
+SUCCESS: Generated states written output.vhd.
+$ cat output.vhd
 architecture behavioral of fsm is
     type t_state is (
-        test_0_0,
+        test_0_0, 
         test_1_0, 
         test_2_1, 
         test_2_2,
-        finish,
-		print_fail, 
-		print_success,
-        FINISH
+
+        wrong_code_state,
+        print_fail,
+        print_success,
+        finish
     );
     signal present_state, next_state : t_state;
 begin
 -- -------------------------------------------------------
 next_state_logic : process(present_state, KEY, CNT_OF)
 begin
-   case (current_state) is
+   case (present_state) is
    
     when test_0_0 =>
         next_state <= test_0_0;
@@ -91,7 +92,7 @@ begin
             next_state <= print_fail;
         end if;
     when print_success =>
-        next_state <= print_fail;
+        next_state <= print_success;
         if (CNT_OF = '1') then
             next_state <= finish;
         end if;
@@ -109,5 +110,10 @@ begin
         next_state <= test_0_0;
    end case;
 end process next_state_logic;
+
+-- TODO sync logic
+-- TODO output logic
+
 end architecture behavioral;
+
 ```
