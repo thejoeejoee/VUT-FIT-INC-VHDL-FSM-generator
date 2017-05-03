@@ -2,11 +2,14 @@
 
 Skript sloužící k automatické vygenerování stavů pro [stavový automat](https://cs.wikipedia.org/wiki/Kone%C4%8Dn%C3%BD_automat) řídící přístupový terminál jako projekt do předmětu INC.
 
-## Použití
-Při spuštění scriptu jste tázáni k zadání návů signálů, pomocných stavů FSM a Vašich kódů k přístupovému terminálu. Všechny hodnoty kromě kódů mají svou výchozí hodnotu, která je použita při nezadání konkrétní hodnoty.
+## Stažení
 ```bash
 $ git clone https://github.com/thejoeejoee/VUT-FIT-INC-VHDL-FSM-generator.git
 $ cd VUT-FIT-INC-VHDL-FSM-generator
+```
+## Použití
+Při spuštění scriptu jste tázáni k zadání návů signálů, pomocných stavů FSM a Vašich kódů k přístupovému terminálu. Všechny hodnoty kromě kódů mají svou výchozí hodnotu, která je použita při nezadání konkrétní hodnoty.
+```bash
 $ ./fsm_generator.py 
 Next state signal name [next_state]: 
 Current state signal name [current_state]: 
@@ -22,10 +25,13 @@ SUCCESS: Generated states written fsm_state.vhd.
 $ cat fsm_state.vhd
 architecture behavioral of fsm is
     type t_state is (
-        test_0_0, 
-		test_1_0, 
-		test_2_1, 
-		test_2_2,
+        test_0_0,
+        test_1_0, 
+        test_2_1, 
+        test_2_2,
+        finish,
+		print_fail, 
+		print_success,
         FINISH
     );
     signal present_state, next_state : t_state;

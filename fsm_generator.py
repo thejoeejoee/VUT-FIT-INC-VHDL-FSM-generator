@@ -9,9 +9,13 @@ from typing import Optional, Iterable
 FILE_PATTERN = """architecture behavioral of fsm is
     type t_state is (
         {states_enum},
-        FINISH
+
+        {wrong_state},
+        {print_fail},
+        {print_success},
+        {finish_state_name}
     );
-    signal present_state, next_state : t_state;
+    signal {current_state_name}, {next_state_name} : t_state;
 begin
 -- -------------------------------------------------------
 next_state_logic : process(present_state, KEY, CNT_OF)
