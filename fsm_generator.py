@@ -29,7 +29,7 @@ begin
             {next_state_name} <= {print_fail};
         end if;
     when {print_success} =>
-        {next_state_name} <= {print_fail};
+        {next_state_name} <= {print_success};
         if (CNT_OF = '1') then
             {next_state_name} <= {finish_state_name};
         end if;
@@ -58,7 +58,7 @@ class Config(object):
 
     code1 = code2 = ""
     next_state_name = 'next_state'
-    current_state_name = 'current_state'
+    present_state_name = 'present_state'
     code_state_pattern = 'test_{}'
     finish_state_name = 'finish'
     wrong_code_state = 'wrong_code_state'
@@ -70,7 +70,7 @@ class Config(object):
     def load(cls):
         conf = Config()
         conf.next_state_name = input("Next state signal name [next_state]: ").strip() or cls.next_state_name
-        conf.current_state_name = input("Current state signal name [current_state]: ").strip() or cls.current_state_name
+        conf.present_state_name = input("Present state signal name [present_state]: ").strip() or cls.present_state_name
         conf.code_state_pattern = input("Code state pattern [test_{}]: ").strip() or cls.code_state_pattern
 
         conf.wrong_code_state = input("Wrong code state name [wrong_code]: ").strip() or cls.wrong_code_state
@@ -141,7 +141,7 @@ class State(object):
         if self.splitter is not None:
             return self.PATTERN.format(
                 current_state=self.current_state,
-                current_state_name=self.config.current_state_name,
+                current_state_name=self.config.present_state_name,
                 next_state=self.next_state,
                 wrong_code_state=self.config.wrong_code_state,
                 print_fail=self.config.print_fail_state if not self.is_last else self.config.print_success_state,
@@ -155,7 +155,7 @@ class State(object):
         elif not self.is_last:
             return self.PATTERN.format(
                 current_state=self.current_state,
-                current_state_name=self.config.current_state_name,
+                current_state_name=self.config.present_state_name,
                 next_state=self.next_state,
                 wrong_code_state=self.config.wrong_code_state,
                 print_fail=self.config.print_fail_state,
@@ -169,7 +169,7 @@ class State(object):
 
         return self.PATTERN_LAST_STATE.format(
             current_state=self.current_state,
-            current_state_name=self.config.current_state_name,
+            current_state_name=self.config.present_state_name,
             wrong_code_state=self.config.wrong_code_state,
             print_success=self.config.print_success_state,
             next_state_name=self.config.next_state_name,
@@ -223,30 +223,30 @@ def generate(config: Config):
                 code_index=2,
                 is_last=code2_len == i
             ))
-    if split:
-        states.append(State(
-            next_state_key=None,
-            char_index=code1_len,
-            config=config,
-            code_index=1,
-            is_last=True
-        ))
-        states.append(State(
-            next_state_key=None,
-            char_index=code1_len,
-            config=config,
-            code_index=2,
-            is_last=True
-        ))
+
+    states.append(State(
+        next_state_key=None,
+        char_index=code1_len,
+        config=config,
+        code_index=1,
+        is_last=True
+    ))
+    states.append(State(
+        next_state_key=None,
+        char_index=code2_len,
+        config=config,
+        code_index=2,
+        is_last=True
+    ))
 
     return FILE_PATTERN.format(
         code_states='\n'.join(state.vhdl for state in states),
-        states_enum=', \n\t\t'.join(state.current_state for state in states),
+        states_enum=', \n\t'.join(state.current_state for state in states),
         wrong_state=config.wrong_code_state,
         print_success=config.print_success_state,
         print_fail=config.print_fail_state,
         next_state_name=config.next_state_name,
-        current_state_name=config.current_state_name,
+        current_state_name=config.present_state_name,
         finish_state_name=config.finish_state_name,
         first_code_state=State.state_name(config, 0, 0)
     )
@@ -260,8 +260,8 @@ if __name__ == '__main__':
 
     """
     config = Config()
-    config.code1 = '427'
-    config.code2 = '48910'
+    config.code1 = '887653211'
+    config.code2 = '8876150458'
     config.output_file = '-'
     """
 
