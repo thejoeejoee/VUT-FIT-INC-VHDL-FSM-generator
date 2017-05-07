@@ -18,7 +18,7 @@ FILE_PATTERN = """architecture behavioral of fsm is
     signal {current_state_name}, {next_state_name} : t_state;
 begin
 -- -------------------------------------------------------
-next_state_logic : process(present_state, KEY, CNT_OF)
+next_state_logic : process({current_state_name}, KEY, CNT_OF)
 begin
    case ({current_state_name}) is
    {code_states}
